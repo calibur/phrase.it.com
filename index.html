@@ -1,1638 +1,1229 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="keywords" content="passphrase generator, secure password, EFF word list, password manager, entropy, cryptography, random passphrase">
-  <meta name="author" content="Matt Drummond">
-  <title>phrase.it.com – Secure Passphrase Generator</title>
-  <link rel="canonical" href="https://phrase.it.com">
-  <meta name="description" content="phrase.it.com is a clean, client-side passphrase generator that creates strong, customizable passphrases using the EFF short word list.">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8f7f5" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#111110" />
+  <title>phrase.it.com — Passphrase Generator</title>
+  <meta name="description" content="Generate memorable passphrases entirely in your browser. No data ever leaves your device." />
+  <link rel="canonical" href="https://phrase.it.com/" />
 
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://phrase.it.com/" />
+  <meta property="og:title"       content="phrase.it.com — Passphrase Generator" />
+  <meta property="og:description" content="Generate secure, memorable passphrases entirely in your browser. No data ever leaves your device." />
+  <meta property="og:site_name"   content="phrase.it.com" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card"        content="summary" />
+  <meta name="twitter:title"       content="phrase.it.com — Passphrase Generator" />
+  <meta name="twitter:description" content="Generate secure, memorable passphrases entirely in your browser. No data ever leaves your device." />
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "phrase.it.com",
+    "url": "https://phrase.it.com/",
+    "description": "Generate secure, memorable passphrases entirely in your browser. No data ever leaves your device.",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": {
+      "@type": "Person",
+      "name": "Matthew Drummond",
+      "url": "https://mattdrummond.ca"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      font-size: clamp(14px, 2vw, 18px);
-      --color-bg: #ffffff;
-      --color-text: #202122;
-      --color-border: #ccc;
-      --color-accent: #005ea2;
-      --color-notice-bg: #eef6ff;
-      --color-notice-text: #004085;
+      color-scheme: light dark;
+
+      --bg:           light-dark(#f8f7f5, #111110);
+      --surface:      light-dark(#ffffff, #1c1b19);
+      --surface-2:    light-dark(#f0ede8, #242320);
+      --border:       light-dark(#e0dbd2, #2c2b27);
+      --border-focus: light-dark(#2d5be3, #6b8ff5);
+      --text:         light-dark(#1a1916, #edeae4);
+      --text-2:       light-dark(#56524a, #a8a49c);
+      --text-3:       light-dark(#706c64, #9e9a93);
+      --accent:       light-dark(#2d5be3, #6b8ff5);
+      --accent-bg:    light-dark(#eef2fd, #182040);
+      --good:         light-dark(#1a7f4e, #4cba82);
+      --good-bg:      light-dark(#edfaf3, #0c1f17);
+      --warn:         light-dark(#b86000, #f5a432);
+      --bad:          light-dark(#c42b2b, #f07070);
+      --bad-bg:       light-dark(#fef2f2, #1f0d0d);
+
+      --radius-sm: 0.5rem;
+      --radius:    0.75rem;
+      --radius-lg: 1.25rem;
+
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', ui-monospace, monospace;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --color-bg: #121212;
-        --color-text: #e0e0e0;
-        --color-border: #444;
-        --color-accent: #4eaaff;
-        --color-notice-bg: #1e2a38;
-        --color-notice-text: #b3dcff;
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      width: min(100% - 2rem, 72rem);
+      margin: 0 auto;
+      padding-block: 2rem 4rem;
+    }
+
+    /* ---- Header ---- */
+
+    .site-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .site-header h1 {
+      margin: 0 0 0.25rem;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .site-header h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .site-header p {
+      margin: 0;
+      color: var(--text-2);
+      font-size: 0.95rem;
+    }
+
+    /* ---- Two-column layout ---- */
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (min-width: 56rem) {
+      .layout {
+        grid-template-columns: minmax(20rem, 26rem) 1fr;
       }
     }
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--color-bg);
-      color: var(--color-text);
-      margin: 0 auto;
-      padding: 1rem;
-      line-height: 1.6;
-      max-width: 100vw;
-      box-sizing: border-box;
+
+    /* ---- Panel ---- */
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
     }
-    header {
-      max-width: 720px;
-      margin: 0 auto;
-      border-bottom: 2px solid var(--color-border);
-      padding-bottom: 1rem;
-    }
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
-    }
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-    }
-    label {
-      font-weight: 500;
-      margin-top: 1rem;
+
+    .panel-label {
       display: block;
+      margin-bottom: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-3);
     }
-    input[type="number"] {
-      margin-top: 0.25rem;
-      padding: 0.5rem;
-      font-size: 1rem;
-      width: 100%;
-      max-width: 120px;
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      box-sizing: border-box;
+
+    /* ---- Settings form ---- */
+
+    fieldset {
+      border: 0;
+      margin: 0;
+      padding: 0;
     }
-    .output-box {
-      margin-top: 1.5rem;
+
+    .field {
+      padding-block: 0.75rem;
+      border-bottom: 1px solid var(--border);
     }
-    #passphrase {
-      width: 100%;
-      height: 6rem;
-      font-size: 1.1rem;
-      padding: 0.75rem;
-      font-family: monospace;
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      resize: none;
-      background: var(--color-bg);
-      color: var(--color-text);
-      box-sizing: border-box;
+
+    .field:first-child { padding-top: 0; }
+    .field:last-child  { border-bottom: none; padding-bottom: 0; }
+
+    .field-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
     }
-    .buttons {
+
+    .field-hint {
+      margin: 0.4rem 0 0;
+      font-size: 0.78rem;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+
+    .collapsible {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .collapsible:last-of-type {
+      border-bottom: none;
+    }
+
+    .collapsible > summary {
       display: flex;
-      justify-content: flex-start;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
-    }
-    button {
-      padding: 0.4rem 0.8rem;
-      font-size: 1.1rem;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
       cursor: pointer;
-      border: 1px solid var(--color-border);
-      background-color: transparent;
-      color: var(--color-text);
-      border-radius: 4px;
-      transition: background-color 0.2s;
+      list-style: none;
+      user-select: none;
     }
-    button:hover {
-      background-color: var(--color-border);
+
+    .collapsible > summary::-webkit-details-marker {
+      display: none;
     }
-    .notification {
-      margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      background: var(--color-notice-bg);
-      color: var(--color-notice-text);
-      border: 1px solid var(--color-border);
-      border-left: 4px solid var(--color-accent);
-      border-radius: 4px;
+
+
+    .collapsible > summary::after {
+      content: '▾';
+      font-size: 0.7rem;
+      color: var(--text-3);
+      transition: transform 0.15s;
+      flex-shrink: 0;
     }
-    footer {
-      max-width: 720px;
-      margin: 3rem auto 0 auto;
-      font-size: 0.85rem;
+
+    .collapsible[open] > summary::after {
+      transform: rotate(-180deg);
+    }
+
+    .collapsible-body {
+      padding-bottom: 0.75rem;
+    }
+
+    .collapsible-body .field {
+      padding-top: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .collapsible-body .separator-field {
+      padding-top: 0.75rem;
+      margin-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Word count */
+
+    .wordcount-stack {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: 2.75rem 1fr 2.75rem;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .stepper-btn {
+      width: 2.75rem;
+      height: 2.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .stepper-btn:hover:not(:disabled) {
+      background: var(--accent-bg);
+      border-color: var(--border-focus);
+      color: var(--accent);
+    }
+
+    .stepper-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      height: 2.75rem;
+      padding: 0 0.5rem;
       text-align: center;
-      color: var(--color-text);
-      padding: 0 1rem;
-      box-sizing: border-box;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.12s;
+      -moz-appearance: textfield;
     }
-    footer a {
-      color: var(--color-accent);
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    input[type="number"]:focus { border-color: var(--border-focus); }
+
+    input[type="range"] {
+      width: 100%;
+      height: 0.3rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      height: 2.75rem;
+      padding: 0 0.75rem;
+      font-size: 0.95rem;
+      font-family: var(--font-mono);
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.12s;
+    }
+
+    input[type="text"]:focus { border-color: var(--border-focus); }
+
+    /* Checkboxes */
+
+    .check-group {
+      display: grid;
+      gap: 0.1rem;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 0.55rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .check:hover { background: var(--surface-2); }
+
+    .check input[type="checkbox"] {
+      width: 1.05rem;
+      height: 1.05rem;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Generate button */
+
+    .generate-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      margin-top: 1.25rem;
+      padding: 0.85rem 1.5rem;
+      font-size: 0.925rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      color: light-dark(#fff, #111110);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.12s, transform 0.1s;
+    }
+
+    .generate-btn:hover  { opacity: 0.88; }
+    .generate-btn:active { transform: scale(0.985); }
+
+    /* ---- Preview panel ---- */
+
+    .preview-stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .passphrase-box {
+      background: var(--surface-2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.12s;
+      min-height: 5rem;
+    }
+
+    .passphrase-box:hover { border-color: var(--border-focus); }
+
+    .passphrase-text {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+      font-weight: 500;
+      color: var(--text);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .passphrase-hint {
+      margin: 0.4rem 0 0;
+      font-size: 0.72rem;
+      color: var(--text-3);
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.6rem 1.15rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .copy-btn:hover          { background: var(--accent); color: #fff; }
+    .copy-btn.state-copied   { background: var(--good-bg); color: var(--good); }
+    .copy-btn.state-failed   { background: var(--bad-bg); color: var(--bad); }
+
+    /* ---- Stats ---- */
+
+    .stats-grid {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .stat-sub {
+      margin-top: 0.15rem;
+      font-size: 0.75rem;
+      color: var(--text-2);
+    }
+
+    .stat-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.9rem;
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--text-2);
+    }
+
+    .stat-metrics strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .strength-track {
+      margin-top: 0.5rem;
+      height: 0.3rem;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease, background-color 0.35s ease;
+    }
+
+    .color-weak        { color: var(--bad); }
+    .color-reasonable  { color: var(--warn); }
+    .color-strong      { color: var(--good); }
+    .color-very-strong { color: var(--good); }
+
+    /* ---- Disclosure ---- */
+
+    details {
+      margin-top: 0.25rem;
+    }
+
+    details > summary {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0.4rem 0;
+      list-style: none;
+    }
+
+    details > summary::-webkit-details-marker { display: none; }
+
+    details:not(.collapsible) > summary::before {
+      content: '▸';
+      font-size: 0.65rem;
+      transition: transform 0.15s;
+    }
+
+    details:not(.collapsible)[open] > summary::before { transform: rotate(90deg); }
+
+    .disclosure-body {
+      padding: 0.75rem 0 0.25rem;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .disclosure-body p          { margin: 0 0 0.6rem; }
+    .disclosure-body p:last-child { margin-bottom: 0; }
+
+    /* ---- Footer ---- */
+
+    .site-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 40rem) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+
+    .footer-section h2 {
+      margin: 0 0 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .footer-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .footer-links a {
+      font-size: 0.85rem;
+      color: var(--accent);
       text-decoration: none;
     }
-    footer a:hover {
-      text-decoration: underline;
+
+    .footer-links a:hover { text-decoration: underline; }
+
+    .footer-note {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--text-3);
+      line-height: 1.5;
     }
-    details {
-      margin-top: 1rem;
-      text-align: left;
+
+    .footer-copy {
+      margin-top: 1.5rem;
     }
-    .visually-hidden {
+
+    /* ---- Disclaimer ---- */
+
+    .disclaimer {
+      margin-top: 2.5rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .disclaimer summary {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .disclaimer .disclosure-body {
+      color: var(--text-3);
+      font-size: 0.8rem;
+    }
+
+    .disclaimer h3 {
+      margin: 1rem 0 0.3rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .disclaimer h3:first-of-type { margin-top: 0.75rem; }
+
+    .disclaimer ul {
+      margin: 0.25rem 0 0;
+      padding-left: 1.25rem;
+    }
+
+    .disclaimer ul li { margin-bottom: 0.25rem; }
+
+    /* ---- Utility ---- */
+
+    .sr-only {
       position: absolute;
       width: 1px;
       height: 1px;
       padding: 0;
-      margin: -1px;
       overflow: hidden;
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
     }
-    small {
-      font-size: 50%;
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: var(--surface-2);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+
+    /* ---- Mobile ---- */
+
+    @media (max-width: 55.9rem) {
+      .page {
+        padding-block: 1.25rem 3rem;
+      }
+
+      .site-header p {
+        display: none;
+      }
+
+      .panel {
+        padding: 1rem;
+        border-radius: var(--radius);
+      }
+
+      .passphrase-text {
+        font-size: 1rem;
+      }
+
+      .stat-value {
+        font-size: 0.95rem;
+      }
+
+
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Phrase.it<small>.com</small></h1>
+
+<div class="page">
+
+  <header class="site-header">
+    <h1><em>phrase</em>.it.com</h1>
+    <p>Memorable passphrases generated in your browser.</p>
   </header>
 
   <main>
-    <form aria-labelledby="wordCountLabel">
-      <label id="wordCountLabel" for="wordCount">Number of Words:</label>
-      <input type="number" id="wordCount" min="3" max="99" value="5" aria-required="true">
-    </form>
+    <section class="layout" aria-label="Passphrase generator">
 
-    <section class="output-box" aria-label="Generated passphrase">
-      <label for="passphrase" class="visually-hidden">Generated passphrase</label>
-      <textarea id="passphrase" readonly aria-readonly="true"></textarea>
-      <div class="buttons">
-        <div>
-          <button onclick="handleGenerate()" title="Generate a new passphrase" aria-label="Generate a new passphrase">🔄</button>
-          <button onclick="handleCopy()" title="Copy passphrase to clipboard" aria-label="Copy passphrase to clipboard">📋</button>
+      <aside class="panel" aria-labelledby="settings-heading">
+        <span class="panel-label" id="settings-heading">Settings</span>
+
+        <form id="generator-form" novalidate>
+          <fieldset>
+            <legend class="sr-only">Passphrase options</legend>
+
+            <div class="field">
+              <label class="field-label" for="word-count">Word count</label>
+              <div class="wordcount-stack">
+                <div class="stepper">
+                  <button class="stepper-btn" id="btn-decrease" type="button" aria-label="Decrease word count">−</button>
+                  <input id="word-count" type="number" min="1" max="20" step="1" value="4" inputmode="numeric" aria-label="Word count" />
+                  <button class="stepper-btn" id="btn-increase" type="button" aria-label="Increase word count">+</button>
+                </div>
+                <input id="word-count-range" type="range" min="1" max="20" step="1" value="4" aria-label="Word count slider" />
+              </div>
+              <p class="field-hint">4+ words recommended. Each additional word multiplies the security of the passphrase.</p>
+            </div>
+
+            <details class="collapsible" id="collapsible-options">
+              <summary>Options</summary>
+              <div class="collapsible-body">
+                <div class="check-group" role="group" aria-label="Generator options">
+                  <label class="check" for="capitalize">
+                    <input id="capitalize" type="checkbox" checked />
+                    <span>Capitalize words</span>
+                  </label>
+                  <label class="check" for="include-numbers">
+                    <input id="include-numbers" type="checkbox" checked />
+                    <span>Append numbers to a word</span>
+                  </label>
+                </div>
+                <div class="field separator-field">
+                  <label class="field-label" for="separator">Separator</label>
+                  <input id="separator" type="text" value="-" maxlength="8" aria-describedby="separator-hint" />
+                  <p class="field-hint" id="separator-hint">Any characters, up to 8. Try <code>_</code>, <code>.</code>, a space, or leave blank.</p>
+                </div>
+              </div>
+            </details>
+          </fieldset>
+
+          <button class="generate-btn" type="submit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <polyline points="1 4 1 10 7 10" /><polyline points="23 20 23 14 17 14" />
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+            </svg>
+            Generate passphrase
+          </button>
+        </form>
+      </aside>
+
+      <section class="panel" aria-labelledby="preview-heading">
+        <span class="panel-label" id="preview-heading">Your passphrase</span>
+
+        <div class="preview-stack">
+
+          <div class="passphrase-box" id="passphrase-box" role="button" tabindex="0">
+            <output id="passphrase-output" class="passphrase-text" aria-live="polite">Generating…</output>
+            <p class="passphrase-hint">Click to copy</p>
+          </div>
+
+          <button id="copy-btn" class="copy-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            <span>Copy to clipboard</span>
+          </button>
+
+          <div class="stats-grid">
+
+            <div class="stat">
+              <div class="stat-label">Security estimate</div>
+              <div class="stat-value" id="stat-strength">—</div>
+              <div class="stat-metrics">
+                <span><strong id="stat-entropy">—</strong> bits</span>
+                <span><strong id="stat-crack">—</strong> crack time</span>
+                <span><strong id="stat-length">—</strong> characters</span>
+              </div>
+              <div class="strength-track" aria-hidden="true">
+                <div class="strength-fill" id="strength-bar"></div>
+              </div>
+              <div class="stat-sub" id="stat-strength-sub">—</div>
+            </div>
+
+          </div>
+
+          <details>
+            <summary>How this estimate works</summary>
+            <div class="disclosure-body">
+              <p>Entropy is estimated from the visible character classes in the generated passphrase using a standard pool-size model: lowercase (26), upper+lower (52), letters+numbers (62), and letters+numbers+symbols (95).</p>
+              <p>Crack time comes from the Hive Systems 2025 table, using visible length and character classes. The final rating takes the more conservative of the entropy estimate and Hive crack-time guidance.</p>
+              <p>As a rule of thumb, short all-lowercase passwords should stay in the weak range even if they reach a few years on the table.</p>
+            </div>
+          </details>
+
         </div>
-      </div>
-      <p id="copyMsg" class="visually-hidden" aria-live="polite"></p>
-      <div id="notification" class="notification" role="status" aria-live="polite" style="display: none;"></div>
+      </section>
     </section>
   </main>
 
-<footer>
-  <p>
-    This generator uses the
-    <a href="https://www.eff.org/dice" target="_blank" rel="noopener noreferrer">
-      EFF short word list
-    </a>.
-  </p>
-  <p>
-    Created by <a href="https://mattdrummond.ca" target="_blank" rel="noopener noreferrer">Matt Drummond</a>.
-  </p>
-  <p>
-    Source code available on <a href="https://github.com/calibur/phrase.it.com" target="_blank" rel="noopener noreferrer">GitHub</a>.
-  </p>
-  <p>
-    This website ("Phrase.it.com") is provided for informational and educational purposes only, to assist users in generating passphrases.
-        By using this Service, you acknowledge and agree to the terms of this Disclaimer.
-  </p>
-  <details>
-    <summary><strong>Disclaimer</strong></summary>
-    <div style="margin-top: 1rem;">
-      <h4>1. No Warranty or Guarantee of Security</h4>
-      <p>
-        THE PASSPHRASES GENERATED BY THIS SERVICE ARE PROVIDED "AS IS" WITHOUT ANY WARRANTY, EXPRESS OR IMPLIED,
-        INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
-        WE DO NOT GUARANTEE THAT THE PASSPHRASES GENERATED WILL BE IMPERVIOUS TO ALL FORMS OF ATTACKS, CRACKING ATTEMPTS,
-        OR UNAUTHORIZED ACCESS.
-      </p>
-
-      <h4>2. User Responsibility</h4>
-      <ul>
-        <li><strong>Safeguarding:</strong> Ensure the passphrase is kept confidential and not shared with unauthorized individuals.</li>
-        <li><strong>Memorization/Storage:</strong> Securely memorize or store the passphrase using secure methods.</li>
-        <li><strong>Application:</strong> Use the passphrase appropriately on secure systems and platforms.</li>
-        <li><strong>Regular Updates:</strong> Change your passphrases regularly, independent of this Service.</li>
-        <li><strong>Verification:</strong> Use other tools to verify the strength and suitability of the passphrase.</li>
-      </ul>
-
-      <h4>3. No Liability for Damages</h4>
-      <p>
-        IN NO EVENT SHALL MATT DRUMMOND BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES,
-        INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, OR OTHER LOSSES RESULTING FROM:
-      </p>
-      <ul>
-        <li>Compromised accounts or breaches due to use of generated passphrases.</li>
-        <li>Failure of a generated passphrase to provide adequate security.</li>
-        <li>Unauthorized access to or alteration of your transmissions or data.</li>
-        <li>Statements or conduct of any third party using the Service.</li>
-      </ul>
-
-      <h4>4. Not a Security Audit or Consultancy</h4>
-      <p>
-        This Service is not a replacement for professional cybersecurity advice or comprehensive security audits.
-      </p>
-
-      <h4>5. No Collection of Passphrases</h4>
-      <p>
-        This Service does not store, transmit, or have access to any passphrases. All generation occurs locally in your browser.
-      </p>
-
-      <h4>6. Changes to Disclaimer</h4>
-      <p>
-        This disclaimer may change without notice. Continued use of the Service constitutes acceptance of any changes.
-      </p>
-
-      <h4>7. Governing Law</h4>
-      <p>
-        By using this Service, you confirm you understand and accept the terms of this disclaimer.
-        If not, please discontinue use immediately.
-      </p>
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-section">
+        <h2>Created by</h2>
+        <ul class="footer-links">
+          <li><a href="https://mattdrummond.ca" rel="noopener">Matthew Drummond</a></li>
+          <li><a href="https://github.com/calibur/phrase.it.com" rel="noopener">Source on GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h2>References</h2>
+        <ul class="footer-links">
+          <li><a href="https://www.eff.org/dice" rel="noopener">EFF Dice-Generated Passphrases</a></li>
+          <li><a href="https://www.eff.org/files/2016/09/08/eff_short_wordlist_2_0.txt" rel="noopener">EFF Short Wordlist 2.0</a></li>
+          <li><a href="https://www.hivesystems.com/blog/are-your-passwords-in-the-green" rel="noopener">Hive Systems Password Table 2025</a></li>
+        </ul>
+      </div>
     </div>
-  </details>
-</footer>
 
+    <details class="disclaimer">
+      <summary>Disclaimer</summary>
+      <div class="disclosure-body">
+        <p>This website ("phrase.it.com") is provided for informational and educational purposes only, to assist users in generating passphrases. By using this service, you acknowledge and agree to the terms of this disclaimer.</p>
 
-  <script>
-    let wordList = [];
+        <h3>1. No Warranty or Guarantee of Security</h3>
+        <p>The passphrases generated by this service are provided "as is" without any warranty, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not guarantee that the passphrases generated will be impervious to all forms of attacks, cracking attempts, or unauthorized access.</p>
 
-    function loadWordList() {
-      const raw = `
-1111  aardvark
-1112  abandoned
-1113  abbreviate
-1114  abdomen
-1115  abhorrence
-1116  abiding
-1121  abnormal
-1122  abrasion
-1123  absorbing
-1124  abundant
-1125  abyss
-1126  academy
-1131  accountant
-1132  acetone
-1133  achiness
-1134  acid
-1135  acoustics
-1136  acquire
-1141  acrobat
-1142  actress
-1143  acuteness
-1144  aerosol
-1145  aesthetic
-1146  affidavit
-1151  afloat
-1152  afraid
-1153  aftershave
-1154  again
-1155  agency
-1156  aggressor
-1161  aghast
-1162  agitate
-1163  agnostic
-1164  agonizing
-1165  agreeing
-1166  aidless
-1211  aimlessly
-1212  ajar
-1213  alarmclock
-1214  albatross
-1215  alchemy
-1216  alfalfa
-1221  algae
-1222  aliens
-1223  alkaline
-1224  almanac
-1225  alongside
-1226  alphabet
-1231  already
-1232  also
-1233  altitude
-1234  aluminum
-1235  always
-1236  amazingly
-1241  ambulance
-1242  amendment
-1243  amiable
-1244  ammunition
-1245  amnesty
-1246  amoeba
-1251  amplifier
-1252  amuser
-1253  anagram
-1254  anchor
-1255  android
-1256  anesthesia
-1261  angelfish
-1262  animal
-1263  anklet
-1264  announcer
-1265  anonymous
-1266  answer
-1311  antelope
-1312  anxiety
-1313  anyplace
-1314  aorta
-1315  apartment
-1316  apnea
-1321  apostrophe
-1322  apple
-1323  apricot
-1324  aquamarine
-1325  arachnid
-1326  arbitrate
-1331  ardently
-1332  arena
-1333  argument
-1334  aristocrat
-1335  armchair
-1336  aromatic
-1341  arrowhead
-1342  arsonist
-1343  artichoke
-1344  asbestos
-1345  ascend
-1346  aseptic
-1351  ashamed
-1352  asinine
-1353  asleep
-1354  asocial
-1355  asparagus
-1356  astronaut
-1361  asymmetric
-1362  atlas
-1363  atmosphere
-1364  atom
-1365  atrocious
-1366  attic
-1411  atypical
-1412  auctioneer
-1413  auditorium
-1414  augmented
-1415  auspicious
-1416  automobile
-1421  auxiliary
-1422  avalanche
-1423  avenue
-1424  aviator
-1425  avocado
-1426  awareness
-1431  awhile
-1432  awkward
-1433  awning
-1434  awoke
-1435  axially
-1436  azalea
-1441  babbling
-1442  backpack
-1443  badass
-1444  bagpipe
-1445  bakery
-1446  balancing
-1451  bamboo
-1452  banana
-1453  barracuda
-1454  basket
-1455  bathrobe
-1456  bazooka
-1461  blade
-1462  blender
-1463  blimp
-1464  blouse
-1465  blurred
-1466  boatyard
-1511  bobcat
-1512  body
-1513  bogusness
-1514  bohemian
-1515  boiler
-1516  bonnet
-1521  boots
-1522  borough
-1523  bossiness
-1524  bottle
-1525  bouquet
-1526  boxlike
-1531  breath
-1532  briefcase
-1533  broom
-1534  brushes
-1535  bubblegum
-1536  buckle
-1541  buddhist
-1542  buffalo
-1543  bullfrog
-1544  bunny
-1545  busboy
-1546  buzzard
-1551  cabin
-1552  cactus
-1553  cadillac
-1554  cafeteria
-1555  cage
-1556  cahoots
-1561  cajoling
-1562  cakewalk
-1563  calculator
-1564  camera
-1565  canister
-1566  capsule
-1611  carrot
-1612  cashew
-1613  cathedral
-1614  caucasian
-1615  caviar
-1616  ceasefire
-1621  cedar
-1622  celery
-1623  cement
-1624  census
-1625  ceramics
-1626  cesspool
-1631  chalkboard
-1632  cheesecake
-1633  chimney
-1634  chlorine
-1635  chopsticks
-1636  chrome
-1641  chute
-1642  cilantro
-1643  cinnamon
-1644  circle
-1645  cityscape
-1646  civilian
-1651  clay
-1652  clergyman
-1653  clipboard
-1654  clock
-1655  clubhouse
-1656  coathanger
-1661  cobweb
-1662  coconut
-1663  codeword
-1664  coexistent
-1665  coffeecake
-1666  cognitive
-2111  cohabitate
-2112  collarbone
-2113  computer
-2114  confetti
-2115  copier
-2116  cornea
-2121  cosmetics
-2122  cotton
-2123  couch
-2124  coverless
-2125  coyote
-2126  coziness
-2131  crawfish
-2132  crewmember
-2133  crib
-2134  croissant
-2135  crumble
-2136  crystal
-2141  cubical
-2142  cucumber
-2143  cuddly
-2144  cufflink
-2145  cuisine
-2146  culprit
-2151  cup
-2152  curry
-2153  cushion
-2154  cuticle
-2155  cybernetic
-2156  cyclist
-2161  cylinder
-2162  cymbal
-2163  cynicism
-2164  cypress
-2165  cytoplasm
-2166  dachshund
-2211  daffodil
-2212  dagger
-2213  dairy
-2214  dalmatian
-2215  dandelion
-2216  dartboard
-2221  dastardly
-2222  datebook
-2223  daughter
-2224  dawn
-2225  daytime
-2226  dazzler
-2231  dealer
-2232  debris
-2233  decal
-2234  dedicate
-2235  deepness
-2236  defrost
-2241  degree
-2242  dehydrator
-2243  deliverer
-2244  democrat
-2245  dentist
-2246  deodorant
-2251  depot
-2252  deranged
-2253  desktop
-2254  detergent
-2255  device
-2256  dexterity
-2261  diamond
-2262  dibs
-2263  dictionary
-2264  diffuser
-2265  digit
-2266  dilated
-2311  dimple
-2312  dinnerware
-2313  dioxide
-2314  diploma
-2315  directory
-2316  dishcloth
-2321  ditto
-2322  dividers
-2323  dizziness
-2324  doctor
-2325  dodge
-2326  doll
-2331  dominoes
-2332  donut
-2333  doorstep
-2334  dorsal
-2335  double
-2336  downstairs
-2341  dozed
-2342  drainpipe
-2343  dresser
-2344  driftwood
-2345  droppings
-2346  drum
-2351  dryer
-2352  dubiously
-2353  duckling
-2354  duffel
-2355  dugout
-2356  dumpster
-2361  duplex
-2362  durable
-2363  dustpan
-2364  dutiful
-2365  duvet
-2366  dwarfism
-2411  dwelling
-2412  dwindling
-2413  dynamite
-2414  dyslexia
-2415  eagerness
-2416  earlobe
-2421  easel
-2422  eavesdrop
-2423  ebook
-2424  eccentric
-2425  echoless
-2426  eclipse
-2431  ecosystem
-2432  ecstasy
-2433  edged
-2434  editor
-2435  educator
-2436  eelworm
-2441  eerie
-2442  effects
-2443  eggnog
-2444  egomaniac
-2445  ejection
-2446  elastic
-2451  elbow
-2452  elderly
-2453  elephant
-2454  elfishly
-2455  eliminator
-2456  elk
-2461  elliptical
-2462  elongated
-2463  elsewhere
-2464  elusive
-2465  elves
-2466  emancipate
-2511  embroidery
-2512  emcee
-2513  emerald
-2514  emission
-2515  emoticon
-2516  emperor
-2521  emulate
-2522  enactment
-2523  enchilada
-2524  endorphin
-2525  energy
-2526  enforcer
-2531  engine
-2532  enhance
-2533  enigmatic
-2534  enjoyably
-2535  enlarged
-2536  enormous
-2541  enquirer
-2542  enrollment
-2543  ensemble
-2544  entryway
-2545  enunciate
-2546  envoy
-2551  enzyme
-2552  epidemic
-2553  equipment
-2554  erasable
-2555  ergonomic
-2556  erratic
-2561  eruption
-2562  escalator
-2563  eskimo
-2564  esophagus
-2565  espresso
-2566  essay
-2611  estrogen
-2612  etching
-2613  eternal
-2614  ethics
-2615  etiquette
-2616  eucalyptus
-2621  eulogy
-2622  euphemism
-2623  euthanize
-2624  evacuation
-2625  evergreen
-2626  evidence
-2631  evolution
-2632  exam
-2633  excerpt
-2634  exerciser
-2635  exfoliate
-2636  exhale
-2641  exist
-2642  exorcist
-2643  explode
-2644  exquisite
-2645  exterior
-2646  exuberant
-2651  fabric
-2652  factory
-2653  faded
-2654  failsafe
-2655  falcon
-2656  family
-2661  fanfare
-2662  fasten
-2663  faucet
-2664  favorite
-2665  feasibly
-2666  february
-3111  federal
-3112  feedback
-3113  feigned
-3114  feline
-3115  femur
-3116  fence
-3121  ferret
-3122  festival
-3123  fettuccine
-3124  feudalist
-3125  feverish
-3126  fiberglass
-3131  fictitious
-3132  fiddle
-3133  figurine
-3134  fillet
-3135  finalist
-3136  fiscally
-3141  fixture
-3142  flashlight
-3143  fleshiness
-3144  flight
-3145  florist
-3146  flypaper
-3151  foamless
-3152  focus
-3153  foggy
-3154  folksong
-3155  fondue
-3156  footpath
-3161  fossil
-3162  fountain
-3163  fox
-3164  fragment
-3165  freeway
-3166  fridge
-3211  frosting
-3212  fruit
-3213  fryingpan
-3214  gadget
-3215  gainfully
-3216  gallstone
-3221  gamekeeper
-3222  gangway
-3223  garlic
-3224  gaslight
-3225  gathering
-3226  gauntlet
-3231  gearbox
-3232  gecko
-3233  gem
-3234  generator
-3235  geographer
-3236  gerbil
-3241  gesture
-3242  getaway
-3243  geyser
-3244  ghoulishly
-3245  gibberish
-3246  giddiness
-3251  giftshop
-3252  gigabyte
-3253  gimmick
-3254  giraffe
-3255  giveaway
-3256  gizmo
-3261  glasses
-3262  gleeful
-3263  glisten
-3264  glove
-3265  glucose
-3266  glycerin
-3311  gnarly
-3312  gnomish
-3313  goatskin
-3314  goggles
-3315  goldfish
-3316  gong
-3321  gooey
-3322  gorgeous
-3323  gosling
-3324  gothic
-3325  gourmet
-3326  governor
-3331  grape
-3332  greyhound
-3333  grill
-3334  groundhog
-3335  grumbling
-3336  guacamole
-3341  guerrilla
-3342  guitar
-3343  gullible
-3344  gumdrop
-3345  gurgling
-3346  gusto
-3351  gutless
-3352  gymnast
-3353  gynecology
-3354  gyration
-3355  habitat
-3356  hacking
-3361  haggard
-3362  haiku
-3363  halogen
-3364  hamburger
-3365  handgun
-3366  happiness
-3411  hardhat
-3412  hastily
-3413  hatchling
-3414  haughty
-3415  hazelnut
-3416  headband
-3421  hedgehog
-3422  hefty
-3423  heinously
-3424  helmet
-3425  hemoglobin
-3426  henceforth
-3431  herbs
-3432  hesitation
-3433  hexagon
-3434  hubcap
-3435  huddling
-3436  huff
-3441  hugeness
-3442  hullabaloo
-3443  human
-3444  hunter
-3445  hurricane
-3446  hushing
-3451  hyacinth
-3452  hybrid
-3453  hydrant
-3454  hygienist
-3455  hypnotist
-3456  ibuprofen
-3461  icepack
-3462  icing
-3463  iconic
-3464  identical
-3465  idiocy
-3466  idly
-3511  igloo
-3512  ignition
-3513  iguana
-3514  illuminate
-3515  imaging
-3516  imbecile
-3521  imitator
-3522  immigrant
-3523  imprint
-3524  iodine
-3525  ionosphere
-3526  ipad
-3531  iphone
-3532  iridescent
-3533  irksome
-3534  iron
-3535  irrigation
-3536  island
-3541  isotope
-3542  issueless
-3543  italicize
-3544  itemizer
-3545  itinerary
-3546  itunes
-3551  ivory
-3552  jabbering
-3553  jackrabbit
-3554  jaguar
-3555  jailhouse
-3556  jalapeno
-3561  jamboree
-3562  janitor
-3563  jarring
-3564  jasmine
-3565  jaundice
-3566  jawbreaker
-3611  jaywalker
-3612  jazz
-3613  jealous
-3614  jeep
-3615  jelly
-3616  jeopardize
-3621  jersey
-3622  jetski
-3623  jezebel
-3624  jiffy
-3625  jigsaw
-3626  jingling
-3631  jobholder
-3632  jockstrap
-3633  jogging
-3634  john
-3635  joinable
-3636  jokingly
-3641  journal
-3642  jovial
-3643  joystick
-3644  jubilant
-3645  judiciary
-3646  juggle
-3651  juice
-3652  jujitsu
-3653  jukebox
-3654  jumpiness
-3655  junkyard
-3656  juror
-3661  justifying
-3662  juvenile
-3663  kabob
-3664  kamikaze
-3665  kangaroo
-3666  karate
-4111  kayak
-4112  keepsake
-4113  kennel
-4114  kerosene
-4115  ketchup
-4116  khaki
-4121  kickstand
-4122  kilogram
-4123  kimono
-4124  kingdom
-4125  kiosk
-4126  kissing
-4131  kite
-4132  kleenex
-4133  knapsack
-4134  kneecap
-4135  knickers
-4136  koala
-4141  krypton
-4142  laboratory
-4143  ladder
-4144  lakefront
-4145  lantern
-4146  laptop
-4151  laryngitis
-4152  lasagna
-4153  latch
-4154  laundry
-4155  lavender
-4156  laxative
-4161  lazybones
-4162  lecturer
-4163  leftover
-4164  leggings
-4165  leisure
-4166  lemon
-4211  length
-4212  leopard
-4213  leprechaun
-4214  lettuce
-4215  leukemia
-4216  levers
-4221  lewdness
-4222  liability
-4223  library
-4224  licorice
-4225  lifeboat
-4226  lightbulb
-4231  likewise
-4232  lilac
-4233  limousine
-4234  lint
-4235  lioness
-4236  lipstick
-4241  liquid
-4242  listless
-4243  litter
-4244  liverwurst
-4245  lizard
-4246  llama
-4251  luau
-4252  lubricant
-4253  lucidity
-4254  ludicrous
-4255  luggage
-4256  lukewarm
-4261  lullaby
-4262  lumberjack
-4263  lunchbox
-4264  luridness
-4265  luscious
-4266  luxurious
-4311  lyrics
-4312  macaroni
-4313  maestro
-4314  magazine
-4315  mahogany
-4316  maimed
-4321  majority
-4322  makeover
-4323  malformed
-4324  mammal
-4325  mango
-4326  mapmaker
-4331  marbles
-4332  massager
-4333  matchstick
-4334  maverick
-4335  maximum
-4336  mayonnaise
-4341  moaning
-4342  mobilize
-4343  moccasin
-4344  modify
-4345  moisture
-4346  molecule
-4351  momentum
-4352  monastery
-4353  moonshine
-4354  mortuary
-4355  mosquito
-4356  motorcycle
-4361  mousetrap
-4362  movie
-4363  mower
-4364  mozzarella
-4365  muckiness
-4366  mudflow
-4411  mugshot
-4412  mule
-4413  mummy
-4414  mundane
-4415  muppet
-4416  mural
-4421  mustard
-4422  mutation
-4423  myriad
-4424  myspace
-4425  myth
-4426  nail
-4431  namesake
-4432  nanosecond
-4433  napkin
-4434  narrator
-4435  nastiness
-4436  natives
-4441  nautically
-4442  navigate
-4443  nearest
-4444  nebula
-4445  nectar
-4446  nefarious
-4451  negotiator
-4452  neither
-4453  nemesis
-4454  neoliberal
-4455  nephew
-4456  nervously
-4461  nest
-4462  netting
-4463  neuron
-4464  nevermore
-4465  nextdoor
-4466  nicotine
-4511  niece
-4512  nimbleness
-4513  nintendo
-4514  nirvana
-4515  nuclear
-4516  nugget
-4521  nuisance
-4522  nullify
-4523  numbing
-4524  nuptials
-4525  nursery
-4526  nutcracker
-4531  nylon
-4532  oasis
-4533  oat
-4534  obediently
-4535  obituary
-4536  object
-4541  obliterate
-4542  obnoxious
-4543  observer
-4544  obtain
-4545  obvious
-4546  occupation
-4551  oceanic
-4552  octopus
-4553  ocular
-4554  office
-4555  oftentimes
-4556  oiliness
-4561  ointment
-4562  older
-4563  olympics
-4564  omissible
-4565  omnivorous
-4566  oncoming
-4611  onion
-4612  onlooker
-4613  onstage
-4614  onward
-4615  onyx
-4616  oomph
-4621  opaquely
-4622  opera
-4623  opium
-4624  opossum
-4625  opponent
-4626  optical
-4631  opulently
-4632  oscillator
-4633  osmosis
-4634  ostrich
-4635  otherwise
-4636  ought
-4641  outhouse
-4642  ovation
-4643  oven
-4644  owlish
-4645  oxford
-4646  oxidize
-4651  oxygen
-4652  oyster
-4653  ozone
-4654  pacemaker
-4655  padlock
-4656  pageant
-4661  pajamas
-4662  palm
-4663  pamphlet
-4664  pantyhose
-4665  paprika
-4666  parakeet
-5111  passport
-5112  patio
-5113  pauper
-5114  pavement
-5115  payphone
-5116  pebble
-5121  peculiarly
-5122  pedometer
-5123  pegboard
-5124  pelican
-5125  penguin
-5126  peony
-5131  pepperoni
-5132  peroxide
-5133  pesticide
-5134  petroleum
-5135  pewter
-5136  pharmacy
-5141  pheasant
-5142  phonebook
-5143  phrasing
-5144  physician
-5145  plank
-5146  pledge
-5151  plotted
-5152  plug
-5153  plywood
-5154  pneumonia
-5155  podiatrist
-5156  poetic
-5161  pogo
-5162  poison
-5163  poking
-5164  policeman
-5165  poncho
-5166  popcorn
-5211  porcupine
-5212  postcard
-5213  poultry
-5214  powerboat
-5215  prairie
-5216  pretzel
-5221  princess
-5222  propeller
-5223  prune
-5224  pry
-5225  pseudo
-5226  psychopath
-5231  publisher
-5232  pucker
-5233  pueblo
-5234  pulley
-5235  pumpkin
-5236  punchbowl
-5241  puppy
-5242  purse
-5243  pushup
-5244  putt
-5245  puzzle
-5246  pyramid
-5251  python
-5252  quarters
-5253  quesadilla
-5254  quilt
-5255  quote
-5256  racoon
-5261  radish
-5262  ragweed
-5263  railroad
-5264  rampantly
-5265  rancidity
-5266  rarity
-5311  raspberry
-5312  ravishing
-5313  rearrange
-5314  rebuilt
-5315  receipt
-5316  reentry
-5321  refinery
-5322  register
-5323  rehydrate
-5324  reimburse
-5325  rejoicing
-5326  rekindle
-5331  relic
-5332  remote
-5333  renovator
-5334  reopen
-5335  reporter
-5336  request
-5341  rerun
-5342  reservoir
-5343  retriever
-5344  reunion
-5345  revolver
-5346  rewrite
-5351  rhapsody
-5352  rhetoric
-5353  rhino
-5354  rhubarb
-5355  rhyme
-5356  ribbon
-5361  riches
-5362  ridden
-5363  rigidness
-5364  rimmed
-5365  riptide
-5366  riskily
-5411  ritzy
-5412  riverboat
-5413  roamer
-5414  robe
-5415  rocket
-5416  romancer
-5421  ropelike
-5422  rotisserie
-5423  roundtable
-5424  royal
-5425  rubber
-5426  rudderless
-5431  rugby
-5432  ruined
-5433  rulebook
-5434  rummage
-5435  running
-5436  rupture
-5441  rustproof
-5442  sabotage
-5443  sacrifice
-5444  saddlebag
-5445  saffron
-5446  sainthood
-5451  saltshaker
-5452  samurai
-5453  sandworm
-5454  sapphire
-5455  sardine
-5456  sassy
-5461  satchel
-5462  sauna
-5463  savage
-5464  saxophone
-5465  scarf
-5466  scenario
-5511  schoolbook
-5512  scientist
-5513  scooter
-5514  scrapbook
-5515  sculpture
-5516  scythe
-5521  secretary
-5522  sedative
-5523  segregator
-5524  seismology
-5525  selected
-5526  semicolon
-5531  senator
-5532  septum
-5533  sequence
-5534  serpent
-5535  sesame
-5536  settler
-5541  severely
-5542  shack
-5543  shelf
-5544  shirt
-5545  shovel
-5546  shrimp
-5551  shuttle
-5552  shyness
-5553  siamese
-5554  sibling
-5555  siesta
-5556  silicon
-5561  simmering
-5562  singles
-5563  sisterhood
-5564  sitcom
-5565  sixfold
-5566  sizable
-5611  skateboard
-5612  skeleton
-5613  skies
-5614  skulk
-5615  skylight
-5616  slapping
-5621  sled
-5622  slingshot
-5623  sloth
-5624  slumbering
-5625  smartphone
-5626  smelliness
-5631  smitten
-5632  smokestack
-5633  smudge
-5634  snapshot
-5635  sneezing
-5636  sniff
-5641  snowsuit
-5642  snugness
-5643  speakers
-5644  sphinx
-5645  spider
-5646  splashing
-5651  sponge
-5652  sprout
-5653  spur
-5654  spyglass
-5655  squirrel
-5656  statue
-5661  steamboat
-5662  stingray
-5663  stopwatch
-5664  strawberry
-5665  student
-5666  stylus
-6111  suave
-6112  subway
-6113  suction
-6114  suds
-6115  suffocate
-6116  sugar
-6121  suitcase
-6122  sulphur
-6123  superstore
-6124  surfer
-6125  sushi
-6126  swan
-6131  sweatshirt
-6132  swimwear
-6133  sword
-6134  sycamore
-6135  syllable
-6136  symphony
-6141  synagogue
-6142  syringes
-6143  systemize
-6144  tablespoon
-6145  taco
-6146  tadpole
-6151  taekwondo
-6152  tagalong
-6153  takeout
-6154  tallness
-6155  tamale
-6156  tanned
-6161  tapestry
-6162  tarantula
-6163  tastebud
-6164  tattoo
-6165  tavern
-6166  thaw
-6211  theater
-6212  thimble
-6213  thorn
-6214  throat
-6215  thumb
-6216  thwarting
-6221  tiara
-6222  tidbit
-6223  tiebreaker
-6224  tiger
-6225  timid
-6226  tinsel
-6231  tiptoeing
-6232  tirade
-6233  tissue
-6234  tractor
-6235  tree
-6236  tripod
-6241  trousers
-6242  trucks
-6243  tryout
-6244  tubeless
-6245  tuesday
-6246  tugboat
-6251  tulip
-6252  tumbleweed
-6253  tupperware
-6254  turtle
-6255  tusk
-6256  tutorial
-6261  tuxedo
-6262  tweezers
-6263  twins
-6264  tyrannical
-6265  ultrasound
-6266  umbrella
-6311  umpire
-6312  unarmored
-6313  unbuttoned
-6314  uncle
-6315  underwear
-6316  unevenness
-6321  unflavored
-6322  ungloved
-6323  unhinge
-6324  unicycle
-6325  unjustly
-6326  unknown
-6331  unlocking
-6332  unmarked
-6333  unnoticed
-6334  unopened
-6335  unpaved
-6336  unquenched
-6341  unroll
-6342  unscrewing
-6343  untied
-6344  unusual
-6345  unveiled
-6346  unwrinkled
-6351  unyielding
-6352  unzip
-6353  upbeat
-6354  upcountry
-6355  update
-6356  upfront
-6361  upgrade
-6362  upholstery
-6363  upkeep
-6364  upload
-6365  uppercut
-6366  upright
-6411  upstairs
-6412  uptown
-6413  upwind
-6414  uranium
-6415  urban
-6416  urchin
-6421  urethane
-6422  urgent
-6423  urologist
-6424  username
-6425  usher
-6426  utensil
-6431  utility
-6432  utmost
-6433  utopia
-6434  utterance
-6435  vacuum
-6436  vagrancy
-6441  valuables
-6442  vanquished
-6443  vaporizer
-6444  varied
-6445  vaseline
-6446  vegetable
-6451  vehicle
-6452  velcro
-6453  vendor
-6454  vertebrae
-6455  vestibule
-6456  veteran
-6461  vexingly
-6462  vicinity
-6463  videogame
-6464  viewfinder
-6465  vigilante
-6466  village
-6511  vinegar
-6512  violin
-6513  viperfish
-6514  virus
-6515  visor
-6516  vitamins
-6521  vivacious
-6522  vixen
-6523  vocalist
-6524  vogue
-6525  voicemail
-6526  volleyball
-6531  voucher
-6532  voyage
-6533  vulnerable
-6534  waffle
-6535  wagon
-6536  wakeup
-6541  walrus
-6542  wanderer
-6543  wasp
-6544  water
-6545  waving
-6546  wheat
-6551  whisper
-6552  wholesaler
-6553  wick
-6554  widow
-6555  wielder
-6556  wifeless
-6561  wikipedia
-6562  wildcat
-6563  windmill
-6564  wipeout
-6565  wired
-6566  wishbone
-6611  wizardry
-6612  wobbliness
-6613  wolverine
-6614  womb
-6615  woolworker
-6616  workbasket
-6621  wound
-6622  wrangle
-6623  wreckage
-6624  wristwatch
-6625  wrongdoing
-6626  xerox
-6631  xylophone
-6632  yacht
-6633  yahoo
-6634  yard
-6635  yearbook
-6636  yesterday
-6641  yiddish
-6642  yield
-6643  yo-yo
-6644  yodel
-6645  yogurt
-6646  yuppie
-6651  zealot
-6652  zebra
-6653  zeppelin
-6654  zestfully
-6655  zigzagged
-6656  zillion
-6661  zipping
-6662  zirconium
-6663  zodiac
-6664  zombie
-6665  zookeeper
-6666  zucchini`;
-      wordList = raw.split('\n')
-        .map(line => line.trim().split(/\s+/)[1])
-        .filter(Boolean)
-        .filter(word => !/[0OIl1]/.test(word));
-      generatePassphrase();
+        <h3>2. User Responsibility</h3>
+        <ul>
+          <li><strong>Safeguarding:</strong> Ensure the passphrase is kept confidential and not shared with unauthorized individuals.</li>
+          <li><strong>Storage:</strong> Securely memorize or store the passphrase using secure methods.</li>
+          <li><strong>Application:</strong> Use the passphrase appropriately on secure systems and platforms.</li>
+          <li><strong>Regular Updates:</strong> Change your passphrases regularly, independent of this service.</li>
+          <li><strong>Verification:</strong> Use other tools to verify the strength and suitability of the passphrase.</li>
+        </ul>
+
+        <h3>3. No Liability for Damages</h3>
+        <p>In no event shall Matthew Drummond be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or other losses resulting from: compromised accounts or breaches due to use of generated passphrases; failure of a generated passphrase to provide adequate security; unauthorized access to or alteration of your transmissions or data; or statements or conduct of any third party using the service.</p>
+
+        <h3>4. Not a Security Audit or Consultancy</h3>
+        <p>This service is not a replacement for professional cybersecurity advice or comprehensive security audits.</p>
+
+        <h3>5. No Collection of Passphrases</h3>
+        <p>This service does not store, transmit, or have access to any passphrases. All generation occurs locally in your browser.</p>
+
+        <h3>6. Changes to Disclaimer</h3>
+        <p>This disclaimer may change without notice. Continued use of the service constitutes acceptance of any changes.</p>
+
+        <h3>7. Governing Law</h3>
+        <p>By using this service, you confirm you understand and accept the terms of this disclaimer. If not, please discontinue use immediately.</p>
+      </div>
+    </details>
+
+    <p class="footer-note footer-copy">phrase.it.com · © 2026 Matthew Drummond</p>
+  </footer>
+
+</div>
+
+<script>
+  const EFF_WORDS = [
+    'aardvark', 'abandoned', 'abbreviate', 'abdomen', 'abhorrence', 'abiding', 'abnormal', 'abrasion', 'absorbing', 'abundant',
+    'abyss', 'academy', 'accountant', 'acetone', 'achiness', 'acid', 'acoustics', 'acquire', 'acrobat', 'actress',
+    'acuteness', 'aerosol', 'aesthetic', 'affidavit', 'afloat', 'afraid', 'aftershave', 'again', 'agency', 'aggressor',
+    'aghast', 'agitate', 'agnostic', 'agonizing', 'agreeing', 'aidless', 'aimlessly', 'ajar', 'alarmclock', 'albatross',
+    'alchemy', 'alfalfa', 'algae', 'aliens', 'alkaline', 'almanac', 'alongside', 'alphabet', 'already', 'also',
+    'altitude', 'aluminum', 'always', 'amazingly', 'ambulance', 'amendment', 'amiable', 'ammunition', 'amnesty', 'amoeba',
+    'amplifier', 'amuser', 'anagram', 'anchor', 'android', 'anesthesia', 'angelfish', 'animal', 'anklet', 'announcer',
+    'anonymous', 'answer', 'antelope', 'anxiety', 'anyplace', 'aorta', 'apartment', 'apnea', 'apostrophe', 'apple',
+    'apricot', 'aquamarine', 'arachnid', 'arbitrate', 'ardently', 'arena', 'argument', 'aristocrat', 'armchair', 'aromatic',
+    'arrowhead', 'arsonist', 'artichoke', 'asbestos', 'ascend', 'aseptic', 'ashamed', 'asinine', 'asleep', 'asocial',
+    'asparagus', 'astronaut', 'asymmetric', 'atlas', 'atmosphere', 'atom', 'atrocious', 'attic', 'atypical', 'auctioneer',
+    'auditorium', 'augmented', 'auspicious', 'automobile', 'auxiliary', 'avalanche', 'avenue', 'aviator', 'avocado', 'awareness',
+    'awhile', 'awkward', 'awning', 'awoke', 'axially', 'azalea', 'babbling', 'backpack', 'badass', 'bagpipe',
+    'bakery', 'balancing', 'bamboo', 'banana', 'barracuda', 'basket', 'bathrobe', 'bazooka', 'blade', 'blender',
+    'blimp', 'blouse', 'blurred', 'boatyard', 'bobcat', 'body', 'bogusness', 'bohemian', 'boiler', 'bonnet',
+    'boots', 'borough', 'bossiness', 'bottle', 'bouquet', 'boxlike', 'breath', 'briefcase', 'broom', 'brushes',
+    'bubblegum', 'buckle', 'buddhist', 'buffalo', 'bullfrog', 'bunny', 'busboy', 'buzzard', 'cabin', 'cactus',
+    'cadillac', 'cafeteria', 'cage', 'cahoots', 'cajoling', 'cakewalk', 'calculator', 'camera', 'canister', 'capsule',
+    'carrot', 'cashew', 'cathedral', 'caucasian', 'caviar', 'ceasefire', 'cedar', 'celery', 'cement', 'census',
+    'ceramics', 'cesspool', 'chalkboard', 'cheesecake', 'chimney', 'chlorine', 'chopsticks', 'chrome', 'chute', 'cilantro',
+    'cinnamon', 'circle', 'cityscape', 'civilian', 'clay', 'clergyman', 'clipboard', 'clock', 'clubhouse', 'coathanger',
+    'cobweb', 'coconut', 'codeword', 'coexistent', 'coffeecake', 'cognitive', 'cohabitate', 'collarbone', 'computer', 'confetti',
+    'copier', 'cornea', 'cosmetics', 'cotton', 'couch', 'coverless', 'coyote', 'coziness', 'crawfish', 'crewmember',
+    'crib', 'croissant', 'crumble', 'crystal', 'cubical', 'cucumber', 'cuddly', 'cufflink', 'cuisine', 'culprit',
+    'cup', 'curry', 'cushion', 'cuticle', 'cybernetic', 'cyclist', 'cylinder', 'cymbal', 'cynicism', 'cypress',
+    'cytoplasm', 'dachshund', 'daffodil', 'dagger', 'dairy', 'dalmatian', 'dandelion', 'dartboard', 'dastardly', 'datebook',
+    'daughter', 'dawn', 'daytime', 'dazzler', 'dealer', 'debris', 'decal', 'dedicate', 'deepness', 'defrost',
+    'degree', 'dehydrator', 'deliverer', 'democrat', 'dentist', 'deodorant', 'depot', 'deranged', 'desktop', 'detergent',
+    'device', 'dexterity', 'diamond', 'dibs', 'dictionary', 'diffuser', 'digit', 'dilated', 'dimple', 'dinnerware',
+    'dioxide', 'diploma', 'directory', 'dishcloth', 'ditto', 'dividers', 'dizziness', 'doctor', 'dodge', 'doll',
+    'dominoes', 'donut', 'doorstep', 'dorsal', 'double', 'downstairs', 'dozed', 'drainpipe', 'dresser', 'driftwood',
+    'droppings', 'drum', 'dryer', 'dubiously', 'duckling', 'duffel', 'dugout', 'dumpster', 'duplex', 'durable',
+    'dustpan', 'dutiful', 'duvet', 'dwarfism', 'dwelling', 'dwindling', 'dynamite', 'dyslexia', 'eagerness', 'earlobe',
+    'easel', 'eavesdrop', 'ebook', 'eccentric', 'echoless', 'eclipse', 'ecosystem', 'ecstasy', 'edged', 'editor',
+    'educator', 'eelworm', 'eerie', 'effects', 'eggnog', 'egomaniac', 'ejection', 'elastic', 'elbow', 'elderly',
+    'elephant', 'elfishly', 'eliminator', 'elk', 'elliptical', 'elongated', 'elsewhere', 'elusive', 'elves', 'emancipate',
+    'embroidery', 'emcee', 'emerald', 'emission', 'emoticon', 'emperor', 'emulate', 'enactment', 'enchilada', 'endorphin',
+    'energy', 'enforcer', 'engine', 'enhance', 'enigmatic', 'enjoyably', 'enlarged', 'enormous', 'enquirer', 'enrollment',
+    'ensemble', 'entryway', 'enunciate', 'envoy', 'enzyme', 'epidemic', 'equipment', 'erasable', 'ergonomic', 'erratic',
+    'eruption', 'escalator', 'eskimo', 'esophagus', 'espresso', 'essay', 'estrogen', 'etching', 'eternal', 'ethics',
+    'etiquette', 'eucalyptus', 'eulogy', 'euphemism', 'euthanize', 'evacuation', 'evergreen', 'evidence', 'evolution', 'exam',
+    'excerpt', 'exerciser', 'exfoliate', 'exhale', 'exist', 'exorcist', 'explode', 'exquisite', 'exterior', 'exuberant',
+    'fabric', 'factory', 'faded', 'failsafe', 'falcon', 'family', 'fanfare', 'fasten', 'faucet', 'favorite',
+    'feasibly', 'february', 'federal', 'feedback', 'feigned', 'feline', 'femur', 'fence', 'ferret', 'festival',
+    'fettuccine', 'feudalist', 'feverish', 'fiberglass', 'fictitious', 'fiddle', 'figurine', 'fillet', 'finalist', 'fiscally',
+    'fixture', 'flashlight', 'fleshiness', 'flight', 'florist', 'flypaper', 'foamless', 'focus', 'foggy', 'folksong',
+    'fondue', 'footpath', 'fossil', 'fountain', 'fox', 'fragment', 'freeway', 'fridge', 'frosting', 'fruit',
+    'fryingpan', 'gadget', 'gainfully', 'gallstone', 'gamekeeper', 'gangway', 'garlic', 'gaslight', 'gathering', 'gauntlet',
+    'gearbox', 'gecko', 'gem', 'generator', 'geographer', 'gerbil', 'gesture', 'getaway', 'geyser', 'ghoulishly',
+    'gibberish', 'giddiness', 'giftshop', 'gigabyte', 'gimmick', 'giraffe', 'giveaway', 'gizmo', 'glasses', 'gleeful',
+    'glisten', 'glove', 'glucose', 'glycerin', 'gnarly', 'gnomish', 'goatskin', 'goggles', 'goldfish', 'gong',
+    'gooey', 'gorgeous', 'gosling', 'gothic', 'gourmet', 'governor', 'grape', 'greyhound', 'grill', 'groundhog',
+    'grumbling', 'guacamole', 'guerrilla', 'guitar', 'gullible', 'gumdrop', 'gurgling', 'gusto', 'gutless', 'gymnast',
+    'gynecology', 'gyration', 'habitat', 'hacking', 'haggard', 'haiku', 'halogen', 'hamburger', 'handgun', 'happiness',
+    'hardhat', 'hastily', 'hatchling', 'haughty', 'hazelnut', 'headband', 'hedgehog', 'hefty', 'heinously', 'helmet',
+    'hemoglobin', 'henceforth', 'herbs', 'hesitation', 'hexagon', 'hubcap', 'huddling', 'huff', 'hugeness', 'hullabaloo',
+    'human', 'hunter', 'hurricane', 'hushing', 'hyacinth', 'hybrid', 'hydrant', 'hygienist', 'hypnotist', 'ibuprofen',
+    'icepack', 'icing', 'iconic', 'identical', 'idiocy', 'idly', 'igloo', 'ignition', 'iguana', 'illuminate',
+    'imaging', 'imbecile', 'imitator', 'immigrant', 'imprint', 'iodine', 'ionosphere', 'ipad', 'iphone', 'iridescent',
+    'irksome', 'iron', 'irrigation', 'island', 'isotope', 'issueless', 'italicize', 'itemizer', 'itinerary', 'itunes',
+    'ivory', 'jabbering', 'jackrabbit', 'jaguar', 'jailhouse', 'jalapeno', 'jamboree', 'janitor', 'jarring', 'jasmine',
+    'jaundice', 'jawbreaker', 'jaywalker', 'jazz', 'jealous', 'jeep', 'jelly', 'jeopardize', 'jersey', 'jetski',
+    'jezebel', 'jiffy', 'jigsaw', 'jingling', 'jobholder', 'jockstrap', 'jogging', 'john', 'joinable', 'jokingly',
+    'journal', 'jovial', 'joystick', 'jubilant', 'judiciary', 'juggle', 'juice', 'jujitsu', 'jukebox', 'jumpiness',
+    'junkyard', 'juror', 'justifying', 'juvenile', 'kabob', 'kamikaze', 'kangaroo', 'karate', 'kayak', 'keepsake',
+    'kennel', 'kerosene', 'ketchup', 'khaki', 'kickstand', 'kilogram', 'kimono', 'kingdom', 'kiosk', 'kissing',
+    'kite', 'kleenex', 'knapsack', 'kneecap', 'knickers', 'koala', 'krypton', 'laboratory', 'ladder', 'lakefront',
+    'lantern', 'laptop', 'laryngitis', 'lasagna', 'latch', 'laundry', 'lavender', 'laxative', 'lazybones', 'lecturer',
+    'leftover', 'leggings', 'leisure', 'lemon', 'length', 'leopard', 'leprechaun', 'lettuce', 'leukemia', 'levers',
+    'lewdness', 'liability', 'library', 'licorice', 'lifeboat', 'lightbulb', 'likewise', 'lilac', 'limousine', 'lint',
+    'lioness', 'lipstick', 'liquid', 'listless', 'litter', 'liverwurst', 'lizard', 'llama', 'luau', 'lubricant',
+    'lucidity', 'ludicrous', 'luggage', 'lukewarm', 'lullaby', 'lumberjack', 'lunchbox', 'luridness', 'luscious', 'luxurious',
+    'lyrics', 'macaroni', 'maestro', 'magazine', 'mahogany', 'maimed', 'majority', 'makeover', 'malformed', 'mammal',
+    'mango', 'mapmaker', 'marbles', 'massager', 'matchstick', 'maverick', 'maximum', 'mayonnaise', 'moaning', 'mobilize',
+    'moccasin', 'modify', 'moisture', 'molecule', 'momentum', 'monastery', 'moonshine', 'mortuary', 'mosquito', 'motorcycle',
+    'mousetrap', 'movie', 'mower', 'mozzarella', 'muckiness', 'mudflow', 'mugshot', 'mule', 'mummy', 'mundane',
+    'muppet', 'mural', 'mustard', 'mutation', 'myriad', 'myspace', 'myth', 'nail', 'namesake', 'nanosecond',
+    'napkin', 'narrator', 'nastiness', 'natives', 'nautically', 'navigate', 'nearest', 'nebula', 'nectar', 'nefarious',
+    'negotiator', 'neither', 'nemesis', 'neoliberal', 'nephew', 'nervously', 'nest', 'netting', 'neuron', 'nevermore',
+    'nextdoor', 'nicotine', 'niece', 'nimbleness', 'nintendo', 'nirvana', 'nuclear', 'nugget', 'nuisance', 'nullify',
+    'numbing', 'nuptials', 'nursery', 'nutcracker', 'nylon', 'oasis', 'oat', 'obediently', 'obituary', 'object',
+    'obliterate', 'obnoxious', 'observer', 'obtain', 'obvious', 'occupation', 'oceanic', 'octopus', 'ocular', 'office',
+    'oftentimes', 'oiliness', 'ointment', 'older', 'olympics', 'omissible', 'omnivorous', 'oncoming', 'onion', 'onlooker',
+    'onstage', 'onward', 'onyx', 'oomph', 'opaquely', 'opera', 'opium', 'opossum', 'opponent', 'optical',
+    'opulently', 'oscillator', 'osmosis', 'ostrich', 'otherwise', 'ought', 'outhouse', 'ovation', 'oven', 'owlish',
+    'oxford', 'oxidize', 'oxygen', 'oyster', 'ozone', 'pacemaker', 'padlock', 'pageant', 'pajamas', 'palm',
+    'pamphlet', 'pantyhose', 'paprika', 'parakeet', 'passport', 'patio', 'pauper', 'pavement', 'payphone', 'pebble',
+    'peculiarly', 'pedometer', 'pegboard', 'pelican', 'penguin', 'peony', 'pepperoni', 'peroxide', 'pesticide', 'petroleum',
+    'pewter', 'pharmacy', 'pheasant', 'phonebook', 'phrasing', 'physician', 'plank', 'pledge', 'plotted', 'plug',
+    'plywood', 'pneumonia', 'podiatrist', 'poetic', 'pogo', 'poison', 'poking', 'policeman', 'poncho', 'popcorn',
+    'porcupine', 'postcard', 'poultry', 'powerboat', 'prairie', 'pretzel', 'princess', 'propeller', 'prune', 'pry',
+    'pseudo', 'psychopath', 'publisher', 'pucker', 'pueblo', 'pulley', 'pumpkin', 'punchbowl', 'puppy', 'purse',
+    'pushup', 'putt', 'puzzle', 'pyramid', 'python', 'quarters', 'quesadilla', 'quilt', 'quote', 'racoon',
+    'radish', 'ragweed', 'railroad', 'rampantly', 'rancidity', 'rarity', 'raspberry', 'ravishing', 'rearrange', 'rebuilt',
+    'receipt', 'reentry', 'refinery', 'register', 'rehydrate', 'reimburse', 'rejoicing', 'rekindle', 'relic', 'remote',
+    'renovator', 'reopen', 'reporter', 'request', 'rerun', 'reservoir', 'retriever', 'reunion', 'revolver', 'rewrite',
+    'rhapsody', 'rhetoric', 'rhino', 'rhubarb', 'rhyme', 'ribbon', 'riches', 'ridden', 'rigidness', 'rimmed',
+    'riptide', 'riskily', 'ritzy', 'riverboat', 'roamer', 'robe', 'rocket', 'romancer', 'ropelike', 'rotisserie',
+    'roundtable', 'royal', 'rubber', 'rudderless', 'rugby', 'ruined', 'rulebook', 'rummage', 'running', 'rupture',
+    'rustproof', 'sabotage', 'sacrifice', 'saddlebag', 'saffron', 'sainthood', 'saltshaker', 'samurai', 'sandworm', 'sapphire',
+    'sardine', 'sassy', 'satchel', 'sauna', 'savage', 'saxophone', 'scarf', 'scenario', 'schoolbook', 'scientist',
+    'scooter', 'scrapbook', 'sculpture', 'scythe', 'secretary', 'sedative', 'segregator', 'seismology', 'selected', 'semicolon',
+    'senator', 'septum', 'sequence', 'serpent', 'sesame', 'settler', 'severely', 'shack', 'shelf', 'shirt',
+    'shovel', 'shrimp', 'shuttle', 'shyness', 'siamese', 'sibling', 'siesta', 'silicon', 'simmering', 'singles',
+    'sisterhood', 'sitcom', 'sixfold', 'sizable', 'skateboard', 'skeleton', 'skies', 'skulk', 'skylight', 'slapping',
+    'sled', 'slingshot', 'sloth', 'slumbering', 'smartphone', 'smelliness', 'smitten', 'smokestack', 'smudge', 'snapshot',
+    'sneezing', 'sniff', 'snowsuit', 'snugness', 'speakers', 'sphinx', 'spider', 'splashing', 'sponge', 'sprout',
+    'spur', 'spyglass', 'squirrel', 'statue', 'steamboat', 'stingray', 'stopwatch', 'strawberry', 'student', 'stylus',
+    'suave', 'subway', 'suction', 'suds', 'suffocate', 'sugar', 'suitcase', 'sulphur', 'superstore', 'surfer',
+    'sushi', 'swan', 'sweatshirt', 'swimwear', 'sword', 'sycamore', 'syllable', 'symphony', 'synagogue', 'syringes',
+    'systemize', 'tablespoon', 'taco', 'tadpole', 'taekwondo', 'tagalong', 'takeout', 'tallness', 'tamale', 'tanned',
+    'tapestry', 'tarantula', 'tastebud', 'tattoo', 'tavern', 'thaw', 'theater', 'thimble', 'thorn', 'throat',
+    'thumb', 'thwarting', 'tiara', 'tidbit', 'tiebreaker', 'tiger', 'timid', 'tinsel', 'tiptoeing', 'tirade',
+    'tissue', 'tractor', 'tree', 'tripod', 'trousers', 'trucks', 'tryout', 'tubeless', 'tuesday', 'tugboat',
+    'tulip', 'tumbleweed', 'tupperware', 'turtle', 'tusk', 'tutorial', 'tuxedo', 'tweezers', 'twins', 'tyrannical',
+    'ultrasound', 'umbrella', 'umpire', 'unarmored', 'unbuttoned', 'uncle', 'underwear', 'unevenness', 'unflavored', 'ungloved',
+    'unhinge', 'unicycle', 'unjustly', 'unknown', 'unlocking', 'unmarked', 'unnoticed', 'unopened', 'unpaved', 'unquenched',
+    'unroll', 'unscrewing', 'untied', 'unusual', 'unveiled', 'unwrinkled', 'unyielding', 'unzip', 'upbeat', 'upcountry',
+    'update', 'upfront', 'upgrade', 'upholstery', 'upkeep', 'upload', 'uppercut', 'upright', 'upstairs', 'uptown',
+    'upwind', 'uranium', 'urban', 'urchin', 'urethane', 'urgent', 'urologist', 'username', 'usher', 'utensil',
+    'utility', 'utmost', 'utopia', 'utterance', 'vacuum', 'vagrancy', 'valuables', 'vanquished', 'vaporizer', 'varied',
+    'vaseline', 'vegetable', 'vehicle', 'velcro', 'vendor', 'vertebrae', 'vestibule', 'veteran', 'vexingly', 'vicinity',
+    'videogame', 'viewfinder', 'vigilante', 'village', 'vinegar', 'violin', 'viperfish', 'virus', 'visor', 'vitamins',
+    'vivacious', 'vixen', 'vocalist', 'vogue', 'voicemail', 'volleyball', 'voucher', 'voyage', 'vulnerable', 'waffle',
+    'wagon', 'wakeup', 'walrus', 'wanderer', 'wasp', 'water', 'waving', 'wheat', 'whisper', 'wholesaler',
+    'wick', 'widow', 'wielder', 'wifeless', 'wikipedia', 'wildcat', 'windmill', 'wipeout', 'wired', 'wishbone',
+    'wizardry', 'wobbliness', 'wolverine', 'womb', 'woolworker', 'workbasket', 'wound', 'wrangle', 'wreckage', 'wristwatch',
+    'wrongdoing', 'xerox', 'xylophone', 'yacht', 'yahoo', 'yard', 'yearbook', 'yesterday', 'yiddish', 'yield',
+    'yo-yo', 'yodel', 'yogurt', 'yuppie', 'zealot', 'zebra', 'zeppelin', 'zestfully', 'zigzagged', 'zillion',
+    'zipping', 'zirconium', 'zodiac', 'zombie', 'zookeeper', 'zucchini'
+  ];
+
+  // Hive Systems 2025 — bcrypt cost 10, 12× RTX 5090
+  // Columns: n=numbers only, l=lowercase, ul=upper+lower, nul=letters+numbers, nuls=letters+numbers+symbols
+  const HIVE = {
+     4: { n:'Instantly',  l:'Instantly',   ul:'Instantly',   nul:'Instantly',    nuls:'Instantly'   },
+     5: { n:'Instantly',  l:'Instantly',   ul:'57 minutes',  nul:'2 hours',      nuls:'4 hours'     },
+     6: { n:'Instantly',  l:'46 minutes',  ul:'2 days',      nul:'6 days',       nuls:'2 weeks'     },
+     7: { n:'Instantly',  l:'20 hours',    ul:'4 months',    nul:'1 year',       nuls:'2 years'     },
+     8: { n:'Instantly',  l:'3 weeks',     ul:'15 years',    nul:'62 years',     nuls:'164 years'   },
+     9: { n:'2 hours',    l:'2 years',     ul:'791 years',   nul:'3k years',     nuls:'11k years'   },
+    10: { n:'1 day',      l:'40 years',    ul:'41k years',   nul:'238k years',   nuls:'803k years'  },
+    11: { n:'1 week',     l:'1k years',    ul:'2m years',    nul:'14m years',    nuls:'56m years'   },
+    12: { n:'3 months',   l:'27k years',   ul:'111m years',  nul:'917m years',   nuls:'3bn years'   },
+    13: { n:'3 years',    l:'705k years',  ul:'5bn years',   nul:'56bn years',   nuls:'275bn years' },
+    14: { n:'28 years',   l:'18m years',   ul:'300bn years', nul:'3tn years',    nuls:'19tn years'  },
+    15: { n:'284 years',  l:'477m years',  ul:'15tn years',  nul:'218tn years',  nuls:'1qd years'   },
+    16: { n:'2k years',   l:'12bn years',  ul:'812tn years', nul:'13qd years',   nuls:'94qd years'  },
+    17: { n:'28k years',  l:'322bn years', ul:'42qd years',  nul:'840qd years',  nuls:'6qn years'   },
+    18: { n:'284k years', l:'8tn years',   ul:'2qn years',   nul:'52qn years',   nuls:'463qn years' }
+  };
+
+  const YEAR_SCALE = { '': 1, k: 1e3, m: 1e6, bn: 1e9, tn: 1e12, qd: 1e15, qn: 1e18 };
+
+  function randomInt(max) {
+    const buf = new Uint32Array(1);
+    window.crypto.getRandomValues(buf);
+    return buf[0] % max;
+  }
+
+  function clamp(val, min, max) {
+    return Math.min(max, Math.max(min, val));
+  }
+
+  // Classify character content of a passphrase in a single pass.
+  // Returns {lo, hi, num, sym} flags used by both entropy and Hive category functions.
+  function classifyChars(passphrase) {
+    let lo = false, hi = false, num = false, sym = false;
+    for (const ch of passphrase) {
+      if      (ch >= 'a' && ch <= 'z') lo  = true;
+      else if (ch >= 'A' && ch <= 'Z') hi  = true;
+      else if (ch >= '0' && ch <= '9') num = true;
+      else                             sym = true;
     }
+    return { lo, hi, num, sym };
+  }
 
-    function getRandomSymbol() {
-      const symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '+', '='];
-      return symbols[Math.floor(Math.random() * symbols.length)];
+  // Pool sizes per the disclaimer: lowercase=26, upper+lower=52, letters+numbers=62, any symbols=95.
+  function estimatedEntropy(passphrase) {
+    const { lo, hi, num, sym } = classifyChars(passphrase);
+    let pool;
+    if (sym)        pool = 95;
+    else if (num)   pool = (lo || hi) ? 62 : 10;
+    else if (lo && hi) pool = 52;
+    else            pool = 26;
+    return passphrase.length * Math.log2(pool);
+  }
+
+  function hiveCategory(passphrase) {
+    const { lo, hi, num, sym } = classifyChars(passphrase);
+    if (num && !lo && !hi && !sym) return 'n';
+    if (lo  && !hi && !num && !sym) return 'l';
+    if ((lo || hi) && !num && !sym) return 'ul';
+    if ((lo || hi) &&  num && !sym) return 'nul';
+    return 'nuls';
+  }
+
+  function hiveCrackTime(passphrase) {
+    const cat = hiveCategory(passphrase);
+    const len = clamp(passphrase.length, 4, 18);
+    return HIVE[len][cat] + (passphrase.length > 18 ? '+' : '');
+  }
+
+  // Converts a Hive crack-time string to approximate years for comparison.
+  function crackTimeYears(str) {
+    const s = str.replace('+', '').trim();
+    if (s === 'Instantly') return 0;
+    const subYear = s.match(/^(\d+)\s+(minute|hour|day|week|month)/);
+    if (subYear) {
+      const toYear = { minute: 1/525960, hour: 1/8766, day: 1/365, week: 1/52, month: 1/12 };
+      return Number(subYear[1]) * toYear[subYear[2]];
     }
+    const m = s.match(/^(\d+)(k|m|bn|tn|qd|qn)?\s+year/);
+    return m ? Number(m[1]) * (YEAR_SCALE[m[2] || ''] || 1) : 0;
+  }
 
-    function generatePassphrase() {
-      const count = parseInt(document.getElementById("wordCount").value);
-      if (wordList.length < count) {
-        document.getElementById("passphrase").value = "Wordlist not loaded yet or not enough words.";
-        return;
-      }
-      const used = new Set();
-      const words = [];
-      while (words.length < count) {
-        const word = wordList[Math.floor(Math.random() * wordList.length)];
-        if (!used.has(word)) {
-          used.add(word);
-          const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
-          const num = Math.random() < 0.5 ? Math.floor(Math.random() * 100) : "";
-          words.push(capitalized + num);
-        }
-      }
-      const passphrase = words.join(getRandomSymbol());
-      const passphraseField = document.getElementById("passphrase");
-      passphraseField.value = passphrase;
-      passphraseField.focus();
-      updateURL(count);
-    }
+  // Per the disclaimer, all-lowercase passphrases are capped at score 1 (Fair)
+  // even if they reach multi-year crack times on the Hive table.
+  function crackTimeScore(passphrase, crackTimeStr) {
+    const years      = crackTimeYears(crackTimeStr);
+    const allLower   = hiveCategory(passphrase) === 'l';
+    if (years === 0)       return 0;
+    if (years < 1)         return 0;
+    if (years < 1000)      return allLower ? 1 : 2;
+    if (years < 1e9)       return allLower ? 1 : 3;
+    return                        allLower ? 1 : 4;
+  }
 
-    function showNotification(message) {
-      const box = document.getElementById("notification");
-      box.textContent = message;
-      box.style.display = "block";
-      setTimeout(() => { box.style.display = "none"; }, 3000);
-    }
+  function entropyScore(bits) {
+    if (bits < 40)  return 0;
+    if (bits < 60)  return 1;
+    if (bits < 80)  return 2;
+    if (bits < 100) return 3;
+    return 4;
+  }
 
-    function handleGenerate() {
-      generatePassphrase();
-      showNotification("New passphrase generated.");
-    }
+  function strengthFromEstimate(passphrase, bits, crackTimeStr) {
+    const score = Math.min(entropyScore(bits), crackTimeScore(passphrase, crackTimeStr));
+    if (score <= 0) return { label: 'Weak',        cls: 'color-weak',        bar: '20%',  color: 'var(--bad)',  guidance: 'Not recommended for real accounts.' };
+    if (score === 1) return { label: 'Fair',        cls: 'color-reasonable',  bar: '45%',  color: 'var(--warn)', guidance: 'Better, but still not ideal for important accounts.' };
+    if (score === 2) return { label: 'Strong',      cls: 'color-strong',      bar: '72%',  color: 'var(--good)', guidance: 'Suitable for most accounts.' };
+    return                  { label: 'Very strong', cls: 'color-very-strong', bar: '100%', color: 'var(--good)', guidance: 'Excellent for important accounts and password managers.' };
+  }
 
-    function handleCopy() {
-      const textArea = document.getElementById("passphrase");
-      textArea.select();
-      document.execCommand("copy");
-      document.getElementById("copyMsg").textContent = "Passphrase copied to clipboard.";
-      showNotification("Passphrase copied to clipboard.");
-    }
+  const wordCount      = document.getElementById('word-count');
+  const wordCountRange = document.getElementById('word-count-range');
+  const btnDecrease    = document.getElementById('btn-decrease');
+  const btnIncrease    = document.getElementById('btn-increase');
+  const separator      = document.getElementById('separator');
+  const capitalize     = document.getElementById('capitalize');
+  const numbers        = document.getElementById('include-numbers');
+  const passphraseBox  = document.getElementById('passphrase-box');
+  const passphraseOut  = document.getElementById('passphrase-output');
+  const copyBtn        = document.getElementById('copy-btn');
+  const statStrength       = document.getElementById('stat-strength');
+  const statStrengthSub    = document.getElementById('stat-strength-sub');
+  const statStrengthBar    = document.getElementById('strength-bar');
+  const statLength         = document.getElementById('stat-length');
+  const statEntropy        = document.getElementById('stat-entropy');
+  const statCrack          = document.getElementById('stat-crack');
 
-    function updateURL(count) {
-      const params = new URLSearchParams(window.location.search);
-      params.set("words", count);
-      history.replaceState(null, "", `${location.pathname}?${params}`);
-    }
+  let currentPassphrase = '';
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const params = new URLSearchParams(window.location.search);
-      const wordCount = params.get("words");
-      if (wordCount && !isNaN(wordCount) && wordCount >= 3 && wordCount <= 99) {
-        document.getElementById("wordCount").value = wordCount;
-      }
-      loadWordList();
+  function syncCount(val) {
+    const n = clamp(Math.round(Number(val)), 1, 20);
+    wordCount.value      = n;
+    wordCountRange.value = n;
+    btnDecrease.disabled = n <= 1;
+    btnIncrease.disabled = n >= 20;
+    return n;
+  }
+
+  function generate() {
+    const count = Number(wordCount.value);
+    const sep   = separator.value;
+    const cap   = capitalize.checked;
+    const nums  = numbers.checked;
+
+    const words = Array.from({ length: count }, () => {
+      const w = EFF_WORDS[randomInt(EFF_WORDS.length)];
+      return cap ? w[0].toUpperCase() + w.slice(1) : w;
     });
-  
-document.addEventListener("DOMContentLoaded", () => {
-  let debounceTimer;
-  const wordInput = document.getElementById("wordCount");
-  wordInput.addEventListener("input", () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      generatePassphrase();
-      updateURL();
-    }, 200);
+
+    if (nums) {
+      const idx = randomInt(words.length);
+      words[idx] += String(randomInt(100)).padStart(2, '0');
+    }
+
+    return words.join(sep);
+  }
+
+  function render() {
+    syncCount(wordCount.value);
+    const passphrase = generate();
+    const bits       = estimatedEntropy(passphrase);
+    const crackTime  = hiveCrackTime(passphrase);
+    const strength   = strengthFromEstimate(passphrase, bits, crackTime);
+
+    currentPassphrase = passphrase;
+
+    passphraseBox.setAttribute('aria-label', passphrase + ' — click to copy');
+    passphraseOut.textContent             = passphrase;
+    statLength.textContent                = passphrase.length;
+    statEntropy.textContent               = bits.toFixed(1);
+    statCrack.textContent                 = crackTime;
+    statStrength.textContent              = strength.label;
+    statStrength.className                = 'stat-value ' + strength.cls;
+    statStrengthSub.textContent           = strength.guidance;
+    statStrengthBar.style.width           = strength.bar;
+    statStrengthBar.style.backgroundColor = strength.color;
+  }
+
+  const SVG_COPY  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const SVG_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const SVG_FAIL  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
+  let copyTimer;
+
+  async function copyPassphrase() {
+    try {
+      await navigator.clipboard.writeText(currentPassphrase);
+      copyBtn.className = 'copy-btn state-copied';
+      copyBtn.innerHTML = SVG_CHECK + '<span>Copied!</span>';
+    } catch {
+      copyBtn.className = 'copy-btn state-failed';
+      copyBtn.innerHTML = SVG_FAIL + '<span>Copy failed — select and copy manually</span>';
+    }
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => {
+      copyBtn.className = 'copy-btn';
+      copyBtn.innerHTML = SVG_COPY + '<span>Copy to clipboard</span>';
+    }, 2000);
+  }
+
+  document.getElementById('generator-form').addEventListener('submit', e => {
+    e.preventDefault();
+    render();
   });
-  loadWordList();
-});
+
+  wordCount.addEventListener('input', render);
+  wordCountRange.addEventListener('input', () => { syncCount(wordCountRange.value); render(); });
+
+  btnDecrease.addEventListener('click', () => {
+    const prev = Number(wordCount.value);
+    const next = syncCount(prev - 1);
+    if (next !== prev) render();
+  });
+
+  btnIncrease.addEventListener('click', () => {
+    const prev = Number(wordCount.value);
+    const next = syncCount(prev + 1);
+    if (next !== prev) render();
+  });
+
+  separator.addEventListener('input',  render);
+  capitalize.addEventListener('change', render);
+  numbers.addEventListener('change',   render);
+
+  copyBtn.addEventListener('click', copyPassphrase);
+
+  passphraseBox.addEventListener('click', copyPassphrase);
+  passphraseBox.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyPassphrase(); }
+  });
+
+  render();
 </script>
+
 </body>
 </html>
